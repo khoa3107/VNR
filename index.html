@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Game Show 1975–1981</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    
+    body { 
+        margin: 0; 
+        padding: 0; 
+        overflow: hidden;
+        /* Animated Gradient Background */
+        background: linear-gradient(-45deg, #141E30, #243B55, #4ca1af, #2c3e50);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    canvas { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; }
+
+    /* Glassmorphism Container */
+    .quiz-container { 
+        position: relative; 
+        z-index: 1; 
+        background: rgba(255, 255, 255, 0.1); 
+        backdrop-filter: blur(15px); 
+        -webkit-backdrop-filter: blur(15px);
+        padding: 40px; 
+        border-radius: 20px; 
+        width: 90%; 
+        max-width: 800px; 
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); 
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center; 
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Info (Progress & Timer) */
+    .header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .progress-text { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+    .timer-text { color: #ffeb3b; display: flex; align-items: center; gap: 8px;}
+
+    /* Timer Bar */
+    .timer-track {
+        width: 100%;
+        height: 8px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 4px;
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+    .timer-bar {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%);
+        transition: width 1s linear, background-color 0.3s;
+    }
+    .timer-bar.danger { background: #ff4b2b; }
+
+    h2 { font-size: 22px; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); min-height: 66px;}
+
+    /* Buttons */
+    .answers-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    @media (max-width: 600px) {
+        .answers-grid { grid-template-columns: 1fr; }
+        .quiz-container { padding: 20px; }
+        h2 { font-size: 18px; }
+    }
+
+    button { 
+        width: 100%; 
+        padding: 18px 20px; 
+        font-size: 16px; 
+        border-radius: 12px; 
+        border: 1px solid rgba(255,255,255,0.2); 
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        cursor: pointer; 
+        text-align: left; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        display: flex;
+        align-items: center;
+    }
+
+    button:hover:not(:disabled) { 
+        background: rgba(255,255,255,0.2); 
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    button:active:not(:disabled) { transform: translateY(0); }
+
+    .correct { 
+        background: linear-gradient(135deg, #11998e, #38ef7d) !important; 
+        border-color: #38ef7d !important;
+        box-shadow: 0 0 15px rgba(56, 239, 125, 0.4);
+    }
+
+    .wrong { 
+        background: linear-gradient(135deg, #cb2d3e, #ef473a) !important; 
+        border-color: #ef473a !important;
+        animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+    }
+
+    /* Result State */
+    #result-screen { display: none; text-align: center; animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #result-screen h1 { font-size: 40px; margin-bottom: 10px; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+    #result-screen p { font-size: 20px; color: #ddd; margin-bottom: 30px; }
+    
+    .btn-restart {
+        background: linear-gradient(135deg, #f12711, #f5af19);
+        border: none;
+        justify-content: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        width: auto;
+        display: inline-flex;
+        padding: 15px 40px;
+    }
+
+    @keyframes popIn { 
+        0% { transform: scale(0.5); opacity: 0; } 
+        100% { transform: scale(1); opacity: 1; } 
+    }
+
+</style>
+</head>
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<div class="quiz-container" id="quiz-box">
+    <div class="header-info">
+        <div class="progress-text" id="progress-text">Câu 1 / 15</div>
+        <div class="timer-text">⏳ <span id="timer-num">15</span>s</div>
+    </div>
+    
+    <div class="timer-track">
+        <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <h2 id="question">Đang tải câu hỏi...</h2>
+    <div class="answers-grid" id="answers"></div>
+</div>
+
+<div class="quiz-container" id="result-screen">
+    <h1>🎉 Hoàn Thành!</h1>
+    <p id="final-score">Bạn trả lời đúng: 0 / 15</p>
+    <button class="btn-restart" onclick="restartQuiz()">Chơi lại</button>
+</div>
+
+<audio id="correctSound"><source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg"></audio>
+<audio id="wrongSound"><source src="https://actions.google.com/sounds/v1/cartoon/boing.ogg" type="audio/ogg"></audio>
+<audio id="fireworksSound"><source src="https://actions.google.com/sounds/v1/ambiences/fireworks.ogg" type="audio/ogg"></audio>
+
+<script>
+const quizData = [
+    {q:"Nguyên nhân chính khiến nông nghiệp gặp khó khăn giai đoạn 1975–1981 là:", a:"Hậu quả chiến tranh, tập thể hóa và thiên tai", b:"Thiếu đất và cơ sở vật chất nông nghiệp", c:"Thiếu lao động và phương tiện sản xuất", d:"Thị trường tiêu thụ hạn chế trong thời gian", correct:"a"},
+    {q:"Đại hội IV Đảng xác định mục tiêu công nghiệp hóa trọng điểm là:", a:"Xây dựng công nghiệp nặng và kế hoạch hóa tập trung", b:"Phát triển các ngành công nghiệp nhẹ và thương mại", c:"Tăng xuất khẩu nông sản và kinh tế địa phương", d:"Đa dạng hóa sở hữu và thị trường công nghiệp", correct:"a"},
+    {q:"Nguyên nhân khiến hợp tác xã nông nghiệp gặp trở ngại là:", a:"Sự miễn cưỡng của nông dân đối với tập thể hóa", b:"Thiếu giống cây trồng và phân bón đầy đủ", c:"Thiếu đất canh tác và cơ sở vật chất", d:"Thiếu lao động trẻ và công nhân nông nghiệp", correct:"a"},
+    {q:"Chiến tranh biên giới phía Bắc năm 1979 tác động chính tới chính trị Việt Nam là:", a:"Tăng cường tinh thần đoàn kết dân tộc và quốc phòng", b:"Mở rộng quan hệ kinh tế và hợp tác quốc tế", c:"Giảm vai trò lãnh đạo của Đảng trong khu vực", d:"Thay đổi hiến pháp và cải cách chính trị", correct:"a"},
+    {q:"Khó khăn lớn trong công nghiệp giai đoạn này là:", a:"Thiếu vốn, thiết bị và hậu quả chiến tranh nặng nề", b:"Thiếu lao động phổ thông và kỹ sư xây dựng", c:"Thiếu thị trường tiêu thụ và cơ sở hạ tầng", d:"Thiếu nguyên liệu và nguồn lực công nghiệp", correct:"a"},
+    {q:"Chính sách ổn định đời sống nhân dân sau 1975 là:", a:"Bao cấp lương thực, phân phối hàng hóa cơ bản", b:"Kinh tế thị trường tự do và doanh nghiệp tư nhân", c:"Tăng xuất khẩu lao động sang các nước Đông Âu", d:"Cho phép doanh nghiệp tư nhân toàn quyền hoạt động", correct:"a"},
+    {q:"Hậu quả trực tiếp nếu không hợp nhất đất nước năm 1975 là:", a:"Chưa thể triển khai kế hoạch xây dựng CNXH thống nhất", b:"Việt Nam sẽ phát triển kinh tế sớm hơn dự kiến", c:"Chiến tranh biên giới phía Bắc có thể không xảy ra", d:"Đại hội IV Đảng sẽ diễn ra sớm hơn dự kiến", correct:"a"},
+    {q:"Điểm khác biệt chính của công nghiệp hóa giai đoạn này so với trước 1975 là:", a:"Tập trung phát triển công nghiệp nặng theo kế hoạch hóa", b:"Đa dạng hóa sở hữu các ngành công nghiệp địa phương", c:"Giảm đầu tư công nghiệp nặng và tăng dịch vụ", d:"Xuất khẩu nông sản là ưu tiên hàng đầu", correct:"a"},
+    {q:"Nguyên nhân chiến tranh biên giới Tây Nam 1978–1979 là:", a:"Bảo vệ lãnh thổ trước xâm lược của Pol Pot và Khmer Đỏ", b:"Tranh chấp lãnh hải trên biển Đông giữa hai nước", c:"Tranh giành các mỏ dầu và khoáng sản chiến lược", d:"Khủng hoảng kinh tế và thiếu nguồn lực quốc phòng", correct:"a"},
+    {q:"Bài học kinh tế từ giai đoạn 1975–1981 là:", a:"Kết hợp xây dựng CNXH với cải cách quản lý và kinh tế linh hoạt", b:"Tập trung xuất khẩu lao động để ổn định kinh tế", c:"Tăng cường thương mại quốc tế và hội nhập kinh tế", d:"Giảm vai trò nhà nước trong mọi lĩnh vực kinh tế", correct:"a"},
+    {q:"Nguyên nhân khiến sản lượng lúa giảm trong những năm đầu sau thống nhất là:", a:"Hậu quả chiến tranh, thiên tai và cơ chế tập thể hóa", b:"Thiếu lao động trẻ và cơ sở vật chất nông nghiệp", c:"Thiếu giống mới và phân bón chất lượng", d:"Thị trường tiêu thụ hạn chế và lưu thông kém", correct:"a"},
+    {q:"Mục tiêu quân sự giai đoạn này là:", a:"Bảo vệ biên giới, củng cố quốc phòng, xây dựng quân đội hiện đại", b:"Mở rộng lực lượng hải quân ra các vùng biển quốc tế", c:"Liên minh quân sự với Liên Xô và các nước Đông Âu", d:"Giảm ngân sách quốc phòng để tập trung phát triển kinh tế", correct:"a"},
+    {q:"So sánh giữa hai giai đoạn 1975–1976 và 1977–1981, điểm khác chính về kinh tế là:", a:"Giai đoạn sau tập trung khôi phục công nghiệp và phát triển CNXH", b:"Giai đoạn sau ưu tiên xuất khẩu nông sản và thương mại", c:"Giai đoạn trước tập trung đầu tư công nghiệp nặng hơn", d:"Giai đoạn sau tăng cường kinh tế thị trường tự do", correct:"a"},
+    {q:"Hậu quả lâu dài của bao cấp cứng nhắc là:", a:"Giảm hiệu quả sản xuất, gây khó khăn cho kinh tế quốc dân", b:"Thúc đẩy nông nghiệp và công nghiệp phát triển nhanh hơn", c:"Tăng xuất khẩu nông sản và hàng hóa cơ bản", d:"Tăng GDP và sự phát triển kinh tế nhanh chóng", correct:"a"},
+    {q:"Nền tảng cho công cuộc đổi mới kinh tế sau này là:", a:"Kinh nghiệm xây dựng CNXH, học hỏi từ khó khăn kinh tế và quân sự", b:"Tăng xuất khẩu lao động sang các nước Đông Âu", c:"Mở rộng thương mại quốc tế và hội nhập kinh tế", d:"Giảm vai trò nhà nước trong mọi lĩnh vực quản lý", correct:"a"}
+];
+
+const TIME_LIMIT = 15;
+let currentQuestion = 0, score = 0, timer, timeLeft = TIME_LIMIT, answered = false;
+let fireworksInterval;
+
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function startTimer() {
+    timeLeft = TIME_LIMIT;
+    document.getElementById('timer-num').innerText = timeLeft;
+    document.getElementById('timer-bar').style.width = '100%';
+    document.getElementById('timer-bar').classList.remove('danger');
+    
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer-num').innerText = timeLeft;
+        
+        let widthPercentage = (timeLeft / TIME_LIMIT) * 100;
+        document.getElementById('timer-bar').style.width = widthPercentage + '%';
+        
+        if (timeLeft <= 5) document.getElementById('timer-bar').classList.add('danger');
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            if (!answered) {
+                document.getElementById('wrongSound').play();
+                revealAnswer();
+                setTimeout(nextQuestion, 2000);
+            }
+        }
+    }, 1000);
+}
+
+function loadQuestion() {
+    answered = false;
+    if (currentQuestion >= quizData.length) {
+        showResults();
+        return;
+    }
+
+    // Reset UI Animations
+    const quizBox = document.getElementById('quiz-box');
+    quizBox.style.animation = 'none';
+    quizBox.offsetHeight; /* trigger reflow */
+    quizBox.style.animation = null; 
+
+    document.getElementById('progress-text').innerText = `Câu ${currentQuestion + 1} / ${quizData.length}`;
+    
+    const q = quizData[currentQuestion];
+    document.getElementById('question').innerHTML = q.q;
+    
+    const answersDiv = document.getElementById('answers');
+    answersDiv.innerHTML = "";
+    
+    let keys = ['a', 'b', 'c', 'd'];
+    shuffleArray(keys);
+    
+    keys.forEach(key => {
+        let btn = document.createElement('button');
+        btn.innerHTML = q[key];
+        btn.dataset.key = key; // Lưu key thực tế thay vì dùng slice chuỗi
+        btn.onclick = () => {
+            if (!answered) {
+                answered = true;
+                checkAnswer(key, btn);
+            }
+        };
+        answersDiv.appendChild(btn);
+    });
+    
+    startTimer();
+}
+
+function checkAnswer(selectedKey, btn) {
+    clearInterval(timer);
+    const q = quizData[currentQuestion];
+    const buttons = document.querySelectorAll('#answers button');
+    
+    if (selectedKey === q.correct) {
+        btn.classList.add('correct');
+        document.getElementById('correctSound').play();
+        score++;
+    } else {
+        btn.classList.add('wrong');
+        document.getElementById('wrongSound').play();
+        // Highlight correct answer
+        buttons.forEach(b => {
+            if (b.dataset.key === q.correct) b.classList.add('correct');
+        });
+    }
+    
+    buttons.forEach(b => b.disabled = true);
+    setTimeout(nextQuestion, 2000);
+}
+
+function revealAnswer() {
+    const q = quizData[currentQuestion];
+    const buttons = document.querySelectorAll('#answers button');
+    buttons.forEach(b => {
+        if (b.dataset.key === q.correct) b.classList.add('correct'); 
+        else b.classList.add('wrong'); 
+        b.disabled = true;
+    });
+}
+
+function nextQuestion() {
+    currentQuestion++;
+    loadQuestion();
+}
+
+function showResults() {
+    document.getElementById('quiz-box').style.display = 'none';
+    const resultScreen = document.getElementById('result-screen');
+    resultScreen.style.display = 'block';
+    
+    document.getElementById('final-score').innerText = `Bạn trả lời đúng: ${score} / ${quizData.length}`;
+    startContinuousFireworks();
+}
+
+function restartQuiz() {
+    currentQuestion = 0;
+    score = 0;
+    document.getElementById('quiz-box').style.display = 'block';
+    document.getElementById('result-screen').style.display = 'none';
+    stopFireworks();
+    loadQuestion();
+}
+
+// --- Nâng cấp hệ thống pháo hoa (Bắn liên tục) ---
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth; 
+canvas.height = window.innerHeight;
+let particles = [];
+let animationId;
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.radius = Math.random() * 3 + 1;
+        this.speedX = (Math.random() - 0.5) * 8;
+        this.speedY = (Math.random() - 0.5) * 8;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.015 + 0.015;
+    }
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.speedY += 0.05; // Gravity
+        this.alpha -= this.decay;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+function createExplosion() {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * (canvas.height / 2); // Bắn nửa trên màn hình
+    const baseHue = Math.random() * 360;
+    document.getElementById('fireworksSound').currentTime = 0;
+    document.getElementById('fireworksSound').play().catch(e=>console.log("Audio play prevented"));
+    
+    for (let i = 0; i < 80; i++) {
+        particles.push(new Particle(x, y, `hsl(${baseHue + Math.random()*30}, 100%, 60%)`));
+    }
+}
+
+function startContinuousFireworks() {
+    createExplosion();
+    fireworksInterval = setInterval(createExplosion, 800);
+    animateFireworks();
+}
+
+function stopFireworks() {
+    clearInterval(fireworksInterval);
+    cancelAnimationFrame(animationId);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = [];
+}
+
+function animateFireworks() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Tạo vệt sáng mờ
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    particles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        if (p.alpha <= 0) particles.splice(index, 1);
+    });
+    
+    animationId = requestAnimationFrame(animateFireworks);
+}
+
+// Khởi chạy game
+loadQuestion();
+</script>
+
+</body>
+</html>
