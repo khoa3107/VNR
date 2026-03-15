@@ -53,35 +53,17 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Header Info (Progress & Timer) */
+    /* Header Info (Progress) */
     .header-info {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         font-weight: 600;
         font-size: 1.1rem;
     }
 
     .progress-text { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
-    .timer-text { color: #ffeb3b; display: flex; align-items: center; gap: 8px;}
-
-    /* Timer Bar */
-    .timer-track {
-        width: 100%;
-        height: 8px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 4px;
-        margin-bottom: 30px;
-        overflow: hidden;
-    }
-    .timer-bar {
-        height: 100%;
-        width: 100%;
-        background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%);
-        transition: width 1s linear, background-color 0.3s;
-    }
-    .timer-bar.danger { background: #ff4b2b; }
 
     h2 { font-size: 22px; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); min-height: 66px;}
 
@@ -171,11 +153,6 @@
 <div class="quiz-container" id="quiz-box">
     <div class="header-info">
         <div class="progress-text" id="progress-text">Câu 1 / 15</div>
-        <div class="timer-text">⏳ <span id="timer-num">15</span>s</div>
-    </div>
-    
-    <div class="timer-track">
-        <div class="timer-bar" id="timer-bar"></div>
     </div>
 
     <h2 id="question">Đang tải câu hỏi...</h2>
@@ -211,8 +188,7 @@ const quizData = [
     {q:"Nền tảng cho công cuộc đổi mới kinh tế sau này là:", a:"Kinh nghiệm xây dựng CNXH, học hỏi từ khó khăn kinh tế và quân sự", b:"Tăng xuất khẩu lao động sang các nước Đông Âu", c:"Mở rộng thương mại quốc tế và hội nhập kinh tế", d:"Giảm vai trò nhà nước trong mọi lĩnh vực quản lý", correct:"a"}
 ];
 
-const TIME_LIMIT = 15;
-let currentQuestion = 0, score = 0, timer, timeLeft = TIME_LIMIT, answered = false;
+let currentQuestion = 0, score = 0, answered = false;
 let fireworksInterval;
 
 function shuffleArray(arr) {
@@ -220,33 +196,6 @@ function shuffleArray(arr) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-}
-
-function startTimer() {
-    timeLeft = TIME_LIMIT;
-    document.getElementById('timer-num').innerText = timeLeft;
-    document.getElementById('timer-bar').style.width = '100%';
-    document.getElementById('timer-bar').classList.remove('danger');
-    
-    clearInterval(timer);
-    timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer-num').innerText = timeLeft;
-        
-        let widthPercentage = (timeLeft / TIME_LIMIT) * 100;
-        document.getElementById('timer-bar').style.width = widthPercentage + '%';
-        
-        if (timeLeft <= 5) document.getElementById('timer-bar').classList.add('danger');
-
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            if (!answered) {
-                document.getElementById('wrongSound').play();
-                revealAnswer();
-                setTimeout(nextQuestion, 2000);
-            }
-        }
-    }, 1000);
 }
 
 function loadQuestion() {
@@ -285,12 +234,9 @@ function loadQuestion() {
         };
         answersDiv.appendChild(btn);
     });
-    
-    startTimer();
 }
 
 function checkAnswer(selectedKey, btn) {
-    clearInterval(timer);
     const q = quizData[currentQuestion];
     const buttons = document.querySelectorAll('#answers button');
     
@@ -308,17 +254,7 @@ function checkAnswer(selectedKey, btn) {
     }
     
     buttons.forEach(b => b.disabled = true);
-    setTimeout(nextQuestion, 2000);
-}
-
-function revealAnswer() {
-    const q = quizData[currentQuestion];
-    const buttons = document.querySelectorAll('#answers button');
-    buttons.forEach(b => {
-        if (b.dataset.key === q.correct) b.classList.add('correct'); 
-        else b.classList.add('wrong'); 
-        b.disabled = true;
-    });
+    setTimeout(nextQuestion, 2000); // Chuyển sang câu tiếp theo sau 2 giây
 }
 
 function nextQuestion() {
